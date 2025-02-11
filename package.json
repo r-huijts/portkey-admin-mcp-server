@@ -13,7 +13,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
     "dotenv": "^16.4.7",
-    "portkey-ai": "^1.6.3",
+    "undici": "^5.28.5",
     "zod": "^3.24.1"
   },
   "name": "portkey-server",

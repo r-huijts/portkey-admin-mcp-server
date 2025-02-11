@@ -1,55 +1,33 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Portkey } from "portkey-ai";
-import dotenv from 'dotenv';
-dotenv.config();
+import { PortkeyService } from "./services/portkey.service.js";
 
-// Create an MCP server
-const server = new Server({
+// Create service instance
+const portkeyService = new PortkeyService();
+
+// Create MCP server
+const server = new McpServer({
   name: "portkey-server",
   version: "1.0.0",
 }, {
   capabilities: {
-    resources: {}
+    tools: {}
   }
 });
 
-// Initialize Portkey client
-const portkey = new Portkey({
-  apiKey: process.env.PORTKEY_API_KEY
-});
 
-// Add users list resource
-server.setRequestHandler("resources/list", async () => {
-  return {
-    resources: [{
-      uri: "portkey://users",
-      name: "Portkey Users",
-      description: "List of all users in the Portkey organization"
-    }]
-  };
-});
-
-// Handle reading the users resource
-server.setRequestHandler("resources/read", async (request) => {
-  if (request.params.uri === "portkey://users") {
-    try {
-      const users = await portkey.admin.users.list();
-      return {
-        contents: [{
-          uri: "portkey://users",
-          mimeType: "application/json",
-          text: JSON.stringify(users.data, null, 2)
-        }]
-      };
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      throw new Error("Failed to fetch users from Portkey");
+server.tool(
+    "list_all_users",
+    "List all portkey users",
+    {},
+    async () => {
+        const users = await portkeyService.listUsers();
+        return {
+            content: [{ type: "text", text: JSON.stringify(users, null, 2) }]
+        }
     }
-  }
-  throw new Error("Resource not found");
-});
+  );
 
-// Start receiving messages on stdin and sending messages on stdout
+// Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);
