@@ -19,6 +19,18 @@ interface PortkeyUsersResponse {
   data: PortkeyUser[];
 }
 
+interface InviteUserRequest {
+  email: string;
+  role: 'admin' | 'member';
+  first_name?: string;
+  last_name?: string;
+}
+
+interface InviteUserResponse {
+  success: boolean;
+  message?: string;
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -63,6 +75,35 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch users from Portkey API');
+    }
+  }
+
+  async inviteUser(data: InviteUserRequest): Promise<InviteUserResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/users/invite`, {
+        method: 'POST',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          role: data.role,
+          first_name: data.first_name,
+          last_name: data.last_name
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `Failed to invite user: ${response.status}`);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to invite user to Portkey');
     }
   }
 } 
