@@ -222,6 +222,52 @@ server.tool(
   }
 );
 
+// List virtual keys tool
+server.tool(
+  "list_virtual_keys",
+  "Retrieve all virtual keys in your Portkey organization, including their usage limits, rate limits, and status",
+  {},
+  async () => {
+    try {
+      const virtualKeys = await portkeyService.listVirtualKeys();
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({
+            total: virtualKeys.total,
+            virtual_keys: virtualKeys.data.map(key => ({
+              name: key.name,
+              slug: key.slug,
+              status: key.status,
+              note: key.note,
+              usage_limits: {
+                credit_limit: key.usage_limits.credit_limit,
+                alert_threshold: key.usage_limits.alert_threshold,
+                periodic_reset: key.usage_limits.periodic_reset
+              },
+              rate_limits: key.rate_limits?.map(limit => ({
+                type: limit.type,
+                unit: limit.unit,
+                value: limit.value
+              })) ?? null,
+              reset_usage: key.reset_usage,
+              created_at: key.created_at,
+              model_config: key.model_config
+            }))
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching virtual keys: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
 // Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);

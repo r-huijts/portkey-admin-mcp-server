@@ -158,6 +158,37 @@ interface ListConfigsResponse {
   data: Config[];
 }
 
+interface VirtualKeyRateLimit {
+  type: 'requests';
+  unit: 'rpm';
+  value: number;
+}
+
+interface VirtualKeyUsageLimits {
+  alert_threshold: number;
+  credit_limit: number;
+  periodic_reset: 'monthly';
+}
+
+interface VirtualKey {
+  name: string;
+  note: string | null;
+  status: 'active' | 'exhausted';
+  usage_limits: VirtualKeyUsageLimits;
+  reset_usage: number | null;
+  created_at: string;
+  slug: string;
+  model_config: Record<string, any>;
+  rate_limits: VirtualKeyRateLimit[] | null;
+  object: 'virtual-key';
+}
+
+interface ListVirtualKeysResponse {
+  object: 'list';
+  total: number;
+  data: VirtualKey[];
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -344,6 +375,27 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch configurations from Portkey API');
+    }
+  }
+
+  async listVirtualKeys(): Promise<ListVirtualKeysResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/virtual-keys`, {
+        method: 'GET',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as ListVirtualKeysResponse;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch virtual keys from Portkey API');
     }
   }
 } 
