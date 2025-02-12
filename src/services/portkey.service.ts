@@ -84,6 +84,34 @@ interface UserGroupedData {
   data: AnalyticsGroup[];
 }
 
+interface WorkspaceDefaults {
+  is_default?: number;
+  metadata?: Record<string, string>;
+  object: 'workspace';
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  last_updated_at: string;
+  defaults: WorkspaceDefaults | null;
+  object: 'workspace';
+}
+
+interface ListWorkspacesResponse {
+  total: number;
+  object: 'list';
+  data: Workspace[];
+}
+
+interface ListWorkspacesParams {
+  page_size?: number;
+  current_page?: number;
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -197,6 +225,37 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch user grouped data from Portkey API');
+    }
+  }
+
+  async listWorkspaces(params?: ListWorkspacesParams): Promise<ListWorkspacesResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.page_size) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      if (params?.current_page) {
+        queryParams.append('current_page', params.current_page.toString());
+      }
+
+      const url = `${this.baseUrl}/admin/workspaces${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as ListWorkspacesResponse;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch workspaces from Portkey API');
     }
   }
 } 
