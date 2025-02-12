@@ -139,6 +139,25 @@ interface SingleWorkspaceResponse {
   users: WorkspaceUser[];
 }
 
+interface Config {
+  id: string;
+  name: string;
+  slug: string;
+  organisation_id: string;
+  workspace_id: string;
+  is_default: number;
+  status: string;
+  owner_id: string;
+  updated_by: string;
+  created_at: string;
+  last_updated_at: string;
+}
+
+interface ListConfigsResponse {
+  success: boolean;
+  data: Config[];
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -304,6 +323,27 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch workspace details from Portkey API');
+    }
+  }
+
+  async listConfigs(): Promise<ListConfigsResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/configs`, {
+        method: 'GET',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as ListConfigsResponse;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch configurations from Portkey API');
     }
   }
 } 

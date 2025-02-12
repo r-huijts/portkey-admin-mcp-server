@@ -183,6 +183,45 @@ server.tool(
   }
 );
 
+// List configurations tool
+server.tool(
+  "list_configs",
+  "Retrieve all configurations in your Portkey organization, including their status and workspace associations",
+  {},
+  async () => {
+    try {
+      const configs = await portkeyService.listConfigs();
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({
+            success: configs.success,
+            configurations: configs.data.map(config => ({
+              id: config.id,
+              name: config.name,
+              slug: config.slug,
+              workspace_id: config.workspace_id,
+              status: config.status,
+              is_default: config.is_default,
+              created_at: config.created_at,
+              last_updated_at: config.last_updated_at,
+              owner_id: config.owner_id,
+              updated_by: config.updated_by
+            }))
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching configurations: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
 // Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);
