@@ -189,6 +189,47 @@ interface ListVirtualKeysResponse {
   data: VirtualKey[];
 }
 
+interface CostDataPoint {
+  timestamp: string;
+  total: number;
+  avg: number;
+}
+
+interface CostSummary {
+  total: number;
+  avg: number;
+}
+
+interface CostAnalyticsResponse {
+  object: 'analytics-graph';
+  data_points: CostDataPoint[];
+  summary: CostSummary;
+}
+
+interface CostAnalyticsParams {
+  time_of_generation_min: string;  // ISO8601 format
+  time_of_generation_max: string;  // ISO8601 format
+  total_units_min?: number;
+  total_units_max?: number;
+  cost_min?: number;
+  cost_max?: number;
+  prompt_token_min?: number;
+  prompt_token_max?: number;
+  completion_token_min?: number;
+  completion_token_max?: number;
+  status_code?: string;
+  weighted_feedback_min?: number;
+  weighted_feedback_max?: number;
+  virtual_keys?: string;
+  configs?: string;
+  workspace_slug?: string;
+  api_key_ids?: string;
+  metadata?: string;
+  ai_org_model?: string;
+  trace_id?: string;
+  span_id?: string;
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -396,6 +437,54 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch virtual keys from Portkey API');
+    }
+  }
+
+  async getCostAnalytics(params: CostAnalyticsParams): Promise<CostAnalyticsResponse> {
+    try {
+      const queryParams = new URLSearchParams({
+        time_of_generation_min: params.time_of_generation_min,
+        time_of_generation_max: params.time_of_generation_max,
+        ...(params.total_units_min && { total_units_min: params.total_units_min.toString() }),
+        ...(params.total_units_max && { total_units_max: params.total_units_max.toString() }),
+        ...(params.cost_min && { cost_min: params.cost_min.toString() }),
+        ...(params.cost_max && { cost_max: params.cost_max.toString() }),
+        ...(params.prompt_token_min && { prompt_token_min: params.prompt_token_min.toString() }),
+        ...(params.prompt_token_max && { prompt_token_max: params.prompt_token_max.toString() }),
+        ...(params.completion_token_min && { completion_token_min: params.completion_token_min.toString() }),
+        ...(params.completion_token_max && { completion_token_max: params.completion_token_max.toString() }),
+        ...(params.status_code && { status_code: params.status_code }),
+        ...(params.weighted_feedback_min && { weighted_feedback_min: params.weighted_feedback_min.toString() }),
+        ...(params.weighted_feedback_max && { weighted_feedback_max: params.weighted_feedback_max.toString() }),
+        ...(params.virtual_keys && { virtual_keys: params.virtual_keys }),
+        ...(params.configs && { configs: params.configs }),
+        ...(params.workspace_slug && { workspace_slug: params.workspace_slug }),
+        ...(params.api_key_ids && { api_key_ids: params.api_key_ids }),
+        ...(params.metadata && { metadata: params.metadata }),
+        ...(params.ai_org_model && { ai_org_model: params.ai_org_model }),
+        ...(params.trace_id && { trace_id: params.trace_id }),
+        ...(params.span_id && { span_id: params.span_id })
+      });
+
+      const response = await fetch(
+        `${this.baseUrl}/analytics/graphs/cost?${queryParams.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'x-portkey-api-key': this.apiKey,
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as CostAnalyticsResponse;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch cost analytics from Portkey API');
     }
   }
 } 

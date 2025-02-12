@@ -268,6 +268,64 @@ server.tool(
   }
 );
 
+// Get cost analytics tool
+server.tool(
+  "get_cost_analytics",
+  "Retrieve detailed cost analytics data over time, including total costs and averages per request",
+  {
+    time_of_generation_min: z.string().describe("Start time for the analytics period (ISO8601 format, e.g., '2024-01-01T00:00:00Z')"),
+    time_of_generation_max: z.string().describe("End time for the analytics period (ISO8601 format, e.g., '2024-02-01T00:00:00Z')"),
+    total_units_min: z.number().positive().optional().describe("Minimum number of total tokens to filter by"),
+    total_units_max: z.number().positive().optional().describe("Maximum number of total tokens to filter by"),
+    cost_min: z.number().positive().optional().describe("Minimum cost in cents to filter by"),
+    cost_max: z.number().positive().optional().describe("Maximum cost in cents to filter by"),
+    prompt_token_min: z.number().positive().optional().describe("Minimum number of prompt tokens"),
+    prompt_token_max: z.number().positive().optional().describe("Maximum number of prompt tokens"),
+    completion_token_min: z.number().positive().optional().describe("Minimum number of completion tokens"),
+    completion_token_max: z.number().positive().optional().describe("Maximum number of completion tokens"),
+    status_code: z.string().optional().describe("Filter by specific HTTP status codes (comma-separated)"),
+    weighted_feedback_min: z.number().min(-10).max(10).optional().describe("Minimum weighted feedback score (-10 to 10)"),
+    weighted_feedback_max: z.number().min(-10).max(10).optional().describe("Maximum weighted feedback score (-10 to 10)"),
+    virtual_keys: z.string().optional().describe("Filter by specific virtual key slugs (comma-separated)"),
+    configs: z.string().optional().describe("Filter by specific config slugs (comma-separated)"),
+    workspace_slug: z.string().optional().describe("Filter by specific workspace"),
+    api_key_ids: z.string().optional().describe("Filter by specific API key UUIDs (comma-separated)"),
+    metadata: z.string().optional().describe("Filter by metadata (stringified JSON object)"),
+    ai_org_model: z.string().optional().describe("Filter by AI provider and model (comma-separated, use __ as separator)"),
+    trace_id: z.string().optional().describe("Filter by trace IDs (comma-separated)"),
+    span_id: z.string().optional().describe("Filter by span IDs (comma-separated)")
+  },
+  async (params) => {
+    try {
+      const analytics = await portkeyService.getCostAnalytics(params);
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({
+            summary: {
+              total_cost: analytics.summary.total,
+              average_cost_per_request: analytics.summary.avg
+            },
+            data_points: analytics.data_points.map(point => ({
+              timestamp: point.timestamp,
+              total_cost: point.total,
+              average_cost: point.avg
+            })),
+            object: analytics.object
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching cost analytics: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
 // Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);
