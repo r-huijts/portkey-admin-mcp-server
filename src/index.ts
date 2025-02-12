@@ -240,11 +240,11 @@ server.tool(
               slug: key.slug,
               status: key.status,
               note: key.note,
-              usage_limits: {
+              usage_limits: key.usage_limits ? {
                 credit_limit: key.usage_limits.credit_limit,
                 alert_threshold: key.usage_limits.alert_threshold,
                 periodic_reset: key.usage_limits.periodic_reset
-              },
+              } : null,
               rate_limits: key.rate_limits?.map(limit => ({
                 type: limit.type,
                 unit: limit.unit,
@@ -320,6 +320,55 @@ server.tool(
         content: [{ 
           type: "text", 
           text: `Error fetching cost analytics: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
+// Get configuration details tool
+server.tool(
+  "get_config",
+  "Retrieve detailed information about a specific configuration, including cache settings, retry policies, and routing strategy",
+  {
+    slug: z.string().describe(
+      "The unique identifier (slug) of the configuration to retrieve. " +
+      "This can be found in the configuration's URL or from the list_configs tool response"
+    )
+  },
+  async (params) => {
+    try {
+      const config = await portkeyService.getConfig(params.slug);
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({
+            success: config.success,
+            config: {
+              cache: config.data?.config?.cache && {
+                mode: config.data.config.cache.mode,
+                max_age: config.data.config.cache.max_age
+              },
+              retry: config.data?.config?.retry && {
+                attempts: config.data.config.retry.attempts,
+                on_status_codes: config.data.config.retry.on_status_codes
+              },
+              strategy: config.data?.config?.strategy && {
+                mode: config.data.config.strategy.mode
+              },
+              targets: config.data?.config?.targets?.map(target => ({
+                provider: target.provider,
+                virtual_key: target.virtual_key
+              }))
+            }
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching configuration details: ${error instanceof Error ? error.message : 'Unknown error'}`
         }]
       };
     }

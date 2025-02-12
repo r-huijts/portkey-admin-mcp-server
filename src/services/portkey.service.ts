@@ -174,7 +174,7 @@ interface VirtualKey {
   name: string;
   note: string | null;
   status: 'active' | 'exhausted';
-  usage_limits: VirtualKeyUsageLimits;
+  usage_limits: VirtualKeyUsageLimits | null;
   reset_usage: number | null;
   created_at: string;
   slug: string;
@@ -228,6 +228,33 @@ interface CostAnalyticsParams {
   ai_org_model?: string;
   trace_id?: string;
   span_id?: string;
+}
+
+interface ConfigTarget {
+  provider?: string;
+  virtual_key?: string;
+}
+
+interface ConfigDetails {
+  retry?: {
+    attempts?: number;
+    on_status_codes?: number[];
+  };
+  cache?: {
+    mode?: string;
+    max_age?: number;
+  };
+  strategy?: {
+    mode?: string;
+  };
+  targets?: ConfigTarget[];
+}
+
+interface GetConfigResponse {
+  success?: boolean;
+  data?: {
+    config?: ConfigDetails;
+  };
 }
 
 export class PortkeyService {
@@ -485,6 +512,28 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch cost analytics from Portkey API');
+    }
+  }
+
+  async getConfig(slug: string): Promise<GetConfigResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/configs/${slug}`, {
+        method: 'GET',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch configuration details from Portkey API');
     }
   }
 } 
