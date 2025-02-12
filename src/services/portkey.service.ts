@@ -112,6 +112,33 @@ interface ListWorkspacesParams {
   current_page?: number;
 }
 
+interface WorkspaceUser {
+  object: 'workspace-user';
+  id: string;
+  first_name: string;
+  last_name: string;
+  org_role: 'admin' | 'member' | 'owner';
+  role: 'admin' | 'member' | 'manager';
+  status: 'active';
+  created_at: string;
+  last_updated_at: string;
+}
+
+interface SingleWorkspaceResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  last_updated_at: string;
+  defaults: {
+    is_default: number;
+    metadata: Record<string, string>;
+    object: 'workspace';
+  } | null;
+  users: WorkspaceUser[];
+}
+
 export class PortkeyService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.portkey.ai/v1';
@@ -256,6 +283,27 @@ export class PortkeyService {
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to fetch workspaces from Portkey API');
+    }
+  }
+
+  async getWorkspace(workspaceId: string): Promise<SingleWorkspaceResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/workspaces/${workspaceId}`, {
+        method: 'GET',
+        headers: {
+          'x-portkey-api-key': this.apiKey,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as SingleWorkspaceResponse;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch workspace details from Portkey API');
     }
   }
 } 

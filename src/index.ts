@@ -136,6 +136,53 @@ server.tool(
   }
 );
 
+// Get single workspace tool
+server.tool(
+  "get_workspace",
+  "Retrieve detailed information about a specific workspace, including its configuration, metadata, and user access details",
+  {
+    workspace_id: z.string().describe(
+      "The unique identifier of the workspace to retrieve. " +
+      "This can be found in the workspace's URL or from the list_workspaces tool response"
+    )
+  },
+  async (params) => {
+    try {
+      const workspace = await portkeyService.getWorkspace(params.workspace_id);
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify({
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug,
+            description: workspace.description,
+            created_at: workspace.created_at,
+            last_updated_at: workspace.last_updated_at,
+            defaults: workspace.defaults,
+            users: workspace.users.map(user => ({
+              id: user.id,
+              name: `${user.first_name} ${user.last_name}`,
+              organization_role: user.org_role,
+              workspace_role: user.role,
+              status: user.status,
+              created_at: user.created_at,
+              last_updated_at: user.last_updated_at
+            }))
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching workspace details: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
 // Start server
 const transport = new StdioServerTransport();
 await server.connect(transport);
