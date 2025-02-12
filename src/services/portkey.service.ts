@@ -19,16 +19,68 @@ interface PortkeyUsersResponse {
   data: PortkeyUser[];
 }
 
+interface WorkspaceDetails {
+  slug: string;
+  role: 'admin' | 'member';
+}
+
+interface WorkspaceApiKeyDetails {
+  name?: string;
+  expiry?: string;  // ISO date string
+  metadata?: Record<string, string>;
+}
+
 interface InviteUserRequest {
   email: string;
   role: 'admin' | 'member';
   first_name?: string;
   last_name?: string;
+  workspaces: WorkspaceDetails[];  // Required
+  workspace_api_key_details?: WorkspaceApiKeyDetails;
 }
 
 interface InviteUserResponse {
-  success: boolean;
-  message?: string;
+  id: string;        // Changed to match API response
+  invite_link: string;  // Changed to match API response
+}
+
+interface UserGroupedDataParams {
+  time_of_generation_min: string;  // ISO8601 format
+  time_of_generation_max: string;  // ISO8601 format
+  total_units_min?: number;
+  total_units_max?: number;
+  cost_min?: number;
+  cost_max?: number;
+  prompt_token_min?: number;
+  prompt_token_max?: number;
+  completion_token_min?: number;
+  completion_token_max?: number;
+  status_code?: string;
+  weighted_feedback_min?: number;
+  weighted_feedback_max?: number;
+  virtual_keys?: string;
+  configs?: string;
+  workspace_slug?: string;
+  api_key_ids?: string;
+  current_page?: number;
+  page_size?: number;
+  metadata?: string;
+  ai_org_model?: string;
+  trace_id?: string;
+  span_id?: string;
+}
+
+interface AnalyticsGroup {
+  user: string;
+  requests: string;
+  cost: string;
+  object: "analytics-group";
+}
+
+interface UserGroupedData {
+  total: number;
+  object: string;
+  data: AnalyticsGroup[];
 }
 
 export class PortkeyService {
@@ -80,7 +132,7 @@ export class PortkeyService {
 
   async inviteUser(data: InviteUserRequest): Promise<InviteUserResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/admin/users/invite`, {
+      const response = await fetch(`${this.baseUrl}/admin/users/invites`, {  // Fixed URL
         method: 'POST',
         headers: {
           'x-portkey-api-key': this.apiKey,
@@ -91,7 +143,9 @@ export class PortkeyService {
           email: data.email,
           role: data.role,
           first_name: data.first_name,
-          last_name: data.last_name
+          last_name: data.last_name,
+          workspaces: data.workspaces,
+          workspace_api_key_details: data.workspace_api_key_details
         })
       });
 
@@ -100,10 +154,48 @@ export class PortkeyService {
         throw new Error(error.message || `Failed to invite user: ${response.status}`);
       }
 
-      return { success: true };
+      const result = await response.json();
+      return {
+        id: result.id,
+        invite_link: result.invite_link
+      };
     } catch (error) {
       console.error('PortkeyService Error:', error);
       throw new Error('Failed to invite user to Portkey');
+    }
+  }
+
+  async getUserGroupedData(params: UserGroupedDataParams): Promise<UserGroupedData> {
+    try {
+      const queryParams = new URLSearchParams({
+        time_of_generation_min: params.time_of_generation_min,
+        time_of_generation_max: params.time_of_generation_max,
+        ...(params.total_units_min && { total_units_min: params.total_units_min.toString() }),
+        ...(params.total_units_max && { total_units_max: params.total_units_max.toString() }),
+        ...(params.cost_min && { cost_min: params.cost_min.toString() }),
+        ...(params.cost_max && { cost_max: params.cost_max.toString() }),
+        // Add other optional parameters as needed
+      });
+
+      const response = await fetch(
+        `${this.baseUrl}/analytics/groups/users?${queryParams.toString()}`, 
+        {
+          method: 'GET',
+          headers: {
+            'x-portkey-api-key': this.apiKey,
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json() as UserGroupedData;
+    } catch (error) {
+      console.error('PortkeyService Error:', error);
+      throw new Error('Failed to fetch user grouped data from Portkey API');
     }
   }
 } 

@@ -37,7 +37,16 @@ server.tool(
     email: z.string().email(),
     role: z.enum(['admin', 'member']),
     first_name: z.string().optional(),
-    last_name: z.string().optional()
+    last_name: z.string().optional(),
+    workspaces: z.array(z.object({
+      slug: z.string(),
+      role: z.enum(['admin', 'member'])
+    })),
+    workspace_api_key_details: z.object({
+      name: z.string().optional(),
+      expiry: z.string().optional(),  // ISO date string
+      metadata: z.record(z.string()).optional()
+    }).optional()
   },
   async (params) => {
     try {
@@ -45,9 +54,11 @@ server.tool(
       return {
         content: [{ 
           type: "text", 
-          text: result.success 
-            ? `Successfully invited ${params.email} as ${params.role}`
-            : `Failed to invite user: ${result.message}`
+          text: JSON.stringify({
+            message: `Successfully invited ${params.email} as ${params.role}`,
+            invite_id: result.id,
+            invite_link: result.invite_link
+          }, null, 2)
         }]
       };
     } catch (error) {
@@ -55,6 +66,41 @@ server.tool(
         content: [{ 
           type: "text", 
           text: `Error inviting user: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+    }
+  }
+);
+
+// Add get user grouped data tool
+server.tool(
+  "get_user_stats",
+  "Get analytics data grouped by users within a time range",
+  {
+    time_of_generation_min: z.string().describe("Start time in ISO8601 format (e.g. 2024-01-01T00:00:00Z)"),
+    time_of_generation_max: z.string().describe("End time in ISO8601 format (e.g. 2024-02-01T00:00:00Z)"),
+    total_units_min: z.number().positive().optional(),
+    total_units_max: z.number().positive().optional(),
+    cost_min: z.number().positive().optional(),
+    cost_max: z.number().positive().optional(),
+    status_code: z.string().optional(),
+    virtual_keys: z.string().optional(),
+    page_size: z.number().positive().optional()
+  },
+  async (params) => {
+    try {
+      const stats = await portkeyService.getUserGroupedData(params);
+      return {
+        content: [{ 
+          type: "text", 
+          text: JSON.stringify(stats, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{ 
+          type: "text", 
+          text: `Error fetching user statistics: ${error instanceof Error ? error.message : 'Unknown error'}`
         }]
       };
     }
