@@ -20,14 +20,15 @@ interface PortkeyUsersResponse {
 }
 
 interface WorkspaceDetails {
-  slug: string;
-  role: 'admin' | 'member';
+  id: string;    // Changed from slug to id
+  role: 'admin' | 'member' | 'manager';  // Added 'manager' option
 }
 
 interface WorkspaceApiKeyDetails {
   name?: string;
-  expiry?: string;  // ISO date string
+  expiry?: string;
   metadata?: Record<string, string>;
+  scopes: string[];  // Added required scopes array
 }
 
 interface InviteUserRequest {
@@ -35,7 +36,7 @@ interface InviteUserRequest {
   role: 'admin' | 'member';
   first_name?: string;
   last_name?: string;
-  workspaces: WorkspaceDetails[];  // Required
+  workspaces: WorkspaceDetails[];
   workspace_api_key_details?: WorkspaceApiKeyDetails;
 }
 

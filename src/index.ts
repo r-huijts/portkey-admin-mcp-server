@@ -39,13 +39,14 @@ server.tool(
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     workspaces: z.array(z.object({
-      slug: z.string(),
-      role: z.enum(['admin', 'member'])
+      id: z.string().describe('Workspace Slug'),
+      role: z.enum(['admin', 'member', 'manager'])
     })),
     workspace_api_key_details: z.object({
       name: z.string().optional(),
-      expiry: z.string().optional(),  // ISO date string
-      metadata: z.record(z.string()).optional()
+      expiry: z.string().optional(),
+      metadata: z.record(z.string()).optional(),
+      scopes: z.array(z.string())
     }).optional()
   },
   async (params) => {
