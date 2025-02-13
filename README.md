@@ -2,6 +2,8 @@
 
 Transform your AI assistant into a Portkey platform expert! This MCP server connects Claude to Portkey's API, enabling comprehensive management of AI configurations, workspaces, analytics, and user access.
 
+<a href="https://glama.ai/mcp/servers/iftjfqrk0v"><img width="380" height="200" src="https://glama.ai/mcp/servers/iftjfqrk0v/badge" alt="Portkey Server MCP server" /></a>
+
 ## Installation
 
 ### 1. From Source
