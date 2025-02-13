@@ -7,15 +7,7 @@ Transform your AI assistant into a Portkey platform expert! This MCP server conn
 
 ## Installation
 
-### Installing via Smithery
-
-To install Portkey MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@r-huijts/portkey-admin-mcp-server):
-
-```bash
-npx -y @smithery/cli install @r-huijts/portkey-admin-mcp-server --client claude
-```
-
-### 1. From Source
+### From Source
 1. Clone this repository
 2. Install dependencies:
 ```bash
@@ -52,6 +44,14 @@ Make sure to:
 - Add your Portkey API key in the `env` section
 
 After updating the configuration, restart Claude Desktop for the changes to take effect.
+
+### Installing via Smithery
+
+To install Portkey MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@r-huijts/portkey-admin-mcp-server):
+
+```bash
+npx -y @smithery/cli install @r-huijts/portkey-admin-mcp-server --client claude
+```
 
 ## Real-World Use Cases
 - "What are my current API usage statistics across different models?"
