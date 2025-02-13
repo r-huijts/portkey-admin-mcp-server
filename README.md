@@ -1,10 +1,19 @@
 # Portkey MCP Server
+[![smithery badge](https://smithery.ai/badge/@r-huijts/portkey-admin-mcp-server)](https://smithery.ai/server/@r-huijts/portkey-admin-mcp-server)
 
 Transform your AI assistant into a Portkey platform expert! This MCP server connects Claude to Portkey's API, enabling comprehensive management of AI configurations, workspaces, analytics, and user access.
 
 <a href="https://glama.ai/mcp/servers/iftjfqrk0v"><img width="380" height="200" src="https://glama.ai/mcp/servers/iftjfqrk0v/badge" alt="Portkey Server MCP server" /></a>
 
 ## Installation
+
+### Installing via Smithery
+
+To install Portkey MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@r-huijts/portkey-admin-mcp-server):
+
+```bash
+npx -y @smithery/cli install @r-huijts/portkey-admin-mcp-server --client claude
+```
 
 ### 1. From Source
 1. Clone this repository
